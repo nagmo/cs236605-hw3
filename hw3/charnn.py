@@ -40,7 +40,8 @@ def remove_chars(text: str, chars_to_remove):
     """
     # TODO: Implement according to the docstring.
     # ====== YOUR CODE: ======
-    re_compile = re.compile(r'\b(?:%s)\b' % '|'.join(chars_to_remove))
+    re_compile = re.compile('|'.join(chars_to_remove))
+    print(re_compile)
     n_removed = re.findall(re_compile, text)
     text_clean = re.sub(re_compile, '', text)
     # ========================
