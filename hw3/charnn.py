@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
+from collections import Counter
 
 
 def char_maps(text: str):
@@ -22,7 +23,8 @@ def char_maps(text: str):
     # It's best if you also sort the chars before assigning indices, so that
     # they're in lexical order.
     # ====== YOUR CODE: ======
-    raise NotImplementedError()
+    char_to_idx = {key: idx for idx, key in enumerate(Counter(sorted(text)).keys())}
+    idx_to_char = {val: key for key, val in char_to_idx.items()}
     # ========================
     return char_to_idx, idx_to_char
 
