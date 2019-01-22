@@ -85,7 +85,29 @@ class Trainer(abc.ABC):
             # - Implement early stopping. This is a very useful and
             #   simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            train_res = self.train_epoch(dl_train, verbose=verbose)
+            train_loss.extend(train_res.losses)
+            train_acc.append(train_res.accuracy)
+
+            test_res = self.test_epoch(dl_test, verbose=verbose)
+            test_loss.extend(test_res.losses)
+            test_acc.append(test_res.accuracy)
+
+            if not best_acc or best_acc < test_acc[-1]:
+                best_acc = test_acc[-1]
+                save_checkpoint = True
+                
+            previous_loss = current_loss if epoch > 0 else None
+            current_loss = torch.tensor(test_res.losses).mean()
+            if previous_loss:
+                if current_loss < previous_loss:
+                    epochs_without_improvement = 0
+                else:
+                    epochs_without_improvement += 1
+
+            if early_stopping and epochs_without_improvement >= early_stopping:
+                actual_num_epochs = epoch
+                break
             # ========================
 
             # Save model checkpoint if requested
@@ -98,7 +120,7 @@ class Trainer(abc.ABC):
                       f'at epoch {epoch+1}')
 
             if post_epoch_fn:
-                post_epoch_fn(epoch, train_result, test_result, verbose)
+                post_epoch_fn(epoch, train_res, test_res, verbose)
 
         return FitResult(actual_num_epochs,
                          train_loss, train_acc, test_loss, test_acc)
@@ -207,14 +229,14 @@ class RNNTrainer(Trainer):
     def train_epoch(self, dl_train: DataLoader, **kw):
         # TODO: Implement modifications to the base method, if needed.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.h_state = None
         # ========================
         return super().train_epoch(dl_train, **kw)
 
     def test_epoch(self, dl_test: DataLoader, **kw):
         # TODO: Implement modifications to the base method, if needed.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        self.h_state = None
         # ========================
         return super().test_epoch(dl_test, **kw)
 
@@ -231,7 +253,18 @@ class RNNTrainer(Trainer):
         # - Update params
         # - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        res, self.h_state = self.model(x, hidden_state=self.h_state)
+        res = res.transpose(1, 2)
+        self.optimizer.zero_grad()
+        loss = self.loss_fn(res, y)
+        loss.backward()
+        self.optimizer.step()
+
+        self.h_state.detach_()
+        
+        y_res = torch.argmax(res, dim=1)
+        num_correct = torch.sum(y == y_res)
+
         # ========================
 
         # Note: scaling num_correct by seq_len because each sample has seq_len
@@ -250,7 +283,12 @@ class RNNTrainer(Trainer):
             # - Loss calculation
             # - Calculate number of correct predictions
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            res, self.h_state = self.model(x, hidden_state=self.h_state)
+            res = res.transpose(1, 2)
+            loss = self.loss_fn(res, y)
+
+            y_res = torch.argmax(res, dim=1)
+            num_correct = torch.sum(y == y_res)
             # ========================
 
         return BatchResult(loss.item(), num_correct.item() / seq_len)
@@ -262,7 +300,11 @@ class VAETrainer(Trainer):
         x = x.to(self.device)  # Image batch (N,C,H,W)
         # TODO: Train a VAE on one batch.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        res, mu, log_sigma2 = self.model(x)
+        self.optimizer.zero_grad()
+        loss, data_loss, _ = self.loss_fn(x, res.to(self.device), mu, log_sigma2)
+        loss.backward()
+        self.optimizer.step()
         # ========================
 
         return BatchResult(loss.item(), 1/data_loss.item())
@@ -274,7 +316,8 @@ class VAETrainer(Trainer):
         with torch.no_grad():
             # TODO: Evaluate a VAE on one batch.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            res, mu, log_sigma2 = self.model(x)
+            loss, data_loss, _ = self.loss_fn(x, res.to(self.device), mu, log_sigma2)
             # ========================
 
         return BatchResult(loss.item(), 1/data_loss.item())
