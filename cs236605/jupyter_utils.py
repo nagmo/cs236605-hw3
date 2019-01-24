@@ -5,7 +5,7 @@ import time
 
 
 def nbconvert(nb_path, execute=False, inplace=False, clear_output=False,
-              debug=False, stdout=False, allow_errors=False, timeout_sec=3600):
+              debug=False, stdout=False, allow_errors=False, timeout_sec=None):
 
     args = ["jupyter", "nbconvert"]
     if execute:
