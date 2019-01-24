@@ -245,8 +245,8 @@ def prepare_submission(hw_dir, out_dir, submitter_ids, skip_run, **kwargs):
     nb_paths.sort()
 
     # 1. Run all notebooks and save outputs within them
-    if not skip_run:
-        run_notebooks(nb_paths, **kwargs)
+    #if not skip_run:
+    #    run_notebooks(nb_paths, **kwargs)
 
     # 2. Run nbnmerge to merge them
     nb_merged = os.path.join(hw_dir, f'{submission_name}.ipynb')
