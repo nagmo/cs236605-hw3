@@ -23,13 +23,17 @@ class Discriminator(nn.Module):
         # flatten the features.
         # ====== YOUR CODE: ======
         count_pool = 0
-        K = [64, 128, 256, 512]
+        #K = [64, 128, 256, 512]
+        K = [250, 500, 750, 1000]
         modules = []
         for in_c, out_c in zip([self.in_size[0]] + K, K):
-            modules += [nn.Conv2d(in_c, out_c, 3, padding=1), 
+            #modules += [nn.Conv2d(in_c, out_c, 3, padding=1), 
+            #            nn.BatchNorm2d(out_c),
+            #            nn.ReLU(),
+            #            nn.MaxPool2d(2)]
+            modules += [nn.Conv2d(in_c, out_c, 4, padding=1, stride=2), 
                         nn.BatchNorm2d(out_c),
-                        nn.ReLU(),
-                        nn.MaxPool2d(2)]
+                        nn.ReLU()]
             count_pool += 1
         self.cnn = nn.Sequential(*modules)
         
@@ -77,21 +81,26 @@ class Generator(nn.Module):
         # section or implement something new.
         # You can assume a fixed image size.
         # ====== YOUR CODE: ======
-        K = [512, 256, 128, 64]
+        K = [250, 500, 750, 1000]
+        #K = [512, 256, 128, 64]
         modules = []
-        first_layer = False
-        for in_channel, out_channel in zip([self.z_dim] + K, K + [out_channels]):
-            if not first_layer:
-                first_layer = True
-                padding = 0
-            else:
-                padding = 1
+        for in_c, out_c in zip([self.z_dim] + K, K + [out_channels]):
+            modules += [nn.ConvTranspose2d(in_c, out_c, featuremap_size, padding=1 if in_c != self.z_dim else 0, stride=2), 
+                        nn.ReLU(),        
+                        nn.BatchNorm2d(out_c)]
+#        first_layer = False
+#        for in_channel, out_channel in zip([self.z_dim] + K, K + [out_channels]):
+#            if not first_layer:
+#                first_layer = True
+#                padding = 0
+#            else:
+#                padding = 1
 
-            modules += [nn.ConvTranspose2d(in_channel, out_channel, featuremap_size, 2, padding, bias=False), nn.Tanh()] \
-                    if out_channel == out_channels \
-                    else [nn.ConvTranspose2d(in_channel, out_channel, featuremap_size, 2, padding, bias=False),
-                      nn.BatchNorm2d(out_channel),
-                      nn.ReLU()]
+#            modules += 
+#            [nn.ConvTranspose2d(in_channel, out_channel, featuremap_size, 2, padding, bias=False), nn.Tanh()]\
+#                    if out_channel == out_channels \
+#                    else [nn.ConvTranspose2d(in_channel, out_channel, featuremap_size, 2, padding, bias=False),
+#                      nn.ReLU(), nn.BatchNorm2d(out_channel)]״״״
         self.generator = nn.Sequential(*modules)
         # ========================
 

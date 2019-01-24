@@ -302,7 +302,7 @@ class VAETrainer(Trainer):
         # ====== YOUR CODE: ======
         res, mu, log_sigma2 = self.model(x)
         self.optimizer.zero_grad()
-        loss, data_loss, _ = self.loss_fn(x, res.to(self.device), mu, log_sigma2)
+        loss, data_loss, _ = self.loss_fn(x, res, mu, log_sigma2)
         loss.backward()
         self.optimizer.step()
         # ========================
